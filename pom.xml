@@ -1,19 +1,117 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <modelVersion>4.0.0</modelVersion>
-    <groupId>net.fhirbox.pegacorn</groupId>
-    <artifactId>pegacorn-petasos</artifactId>
-    <version>1.0-SNAPSHOT</version>
-    <packaging>pom</packaging>
+<?xml version="1.0" encoding="UTF-8" standalone="no"?><project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+
+  <modelVersion>4.0.0</modelVersion>
+
+	<parent>
+		<groupId>net.fhirbox.pegacorn</groupId>
+		<artifactId>the-pegacorn-project</artifactId>
+		<version>1.0.0-SNAPSHOT</version>
+		<relativePath>../pegacorn</relativePath>
+	</parent>
+
+	<artifactId>pegacorn-petasos</artifactId>
+	<name>Pegacorn :: Petasos</name>
+	<description>Pegacorn Resilience and Reliability Framework</description>
+    <version>1.0.0-SNAPSHOT</version>
+
+	<packaging>jar</packaging>
+
+	<scm>
+		<!--url>https://actgovernment@dev.azure.com/ACTGovernment/Pegacorn/_git/pegacorn-petasos</url-->
+		<url>https://github.com/fhirbox/pegacorn-petasos.git</url>
+	</scm>
+	
+  <properties>
+    <maven.compiler.source>1.8</maven.compiler.source>
+    <maven.compiler.target>1.8</maven.compiler.target>
+    <failOnMissingWebXml>false</failOnMissingWebXml>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <netbeans.hint.license>mit</netbeans.hint.license>
+  </properties>
+
+   <build>
+
+    <finalName>${project.artifactId}-${project.version}</finalName>
+
+  </build>
+
+  <dependencies>
+    <!-- logging -->
+    <dependency>
+      <groupId>org.apache.logging.log4j</groupId>
+      <artifactId>log4j-api</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.logging.log4j</groupId>
+      <artifactId>log4j-core</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.logging.log4j</groupId>
+      <artifactId>log4j-slf4j-impl</artifactId>
+    </dependency>
     
-    <name>Pegacorn :: Petasos</name>
+    <!-- JSON -->
+    <dependency>
+        <groupId>org.json</groupId>
+        <artifactId>json</artifactId>
+        <version>20190722</version>
+    </dependency>
+
+    <!-- Wildfly. Just copied from MITaF, not sure how much is needed but all the annotations are here somewhere -->
+    <dependency>
+        <groupId>org.jboss.msc</groupId>
+        <artifactId>jboss-msc</artifactId>
+        <scope>provided</scope>
+    </dependency>
+    <dependency>
+        <groupId>javax.enterprise</groupId>
+        <artifactId>cdi-api</artifactId>
+        <version>${javax.enterprise.cdi-api.version}</version>
+        <scope>provided</scope>
+    </dependency>
+    <dependency>
+        <groupId>org.jboss.spec.javax.ejb</groupId>
+        <artifactId>jboss-ejb-api_3.2_spec</artifactId>
+        <scope>provided</scope>
+    </dependency>
+    <dependency>
+        <groupId>org.jboss.spec.javax.jms</groupId>
+        <artifactId>jboss-jms-api_2.0_spec</artifactId>
+        <scope>provided</scope>
+    </dependency>
+    <dependency>
+        <groupId>org.jboss.spec.javax.servlet</groupId>
+        <artifactId>jboss-servlet-api_4.0_spec</artifactId>
+        <scope>provided</scope>
+    </dependency>
+    <dependency>
+        <groupId>org.jboss.spec.javax.ws.rs</groupId>
+        <artifactId>jboss-jaxrs-api_2.1_spec</artifactId>
+        <scope>provided</scope>
+    </dependency>
     
-    <properties>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <maven.compiler.source>1.8</maven.compiler.source>
-        <maven.compiler.target>1.8</maven.compiler.target>
-    </properties>
-    <modules>
-        <module>../pegacorn-petasos-common</module>
-    </modules>
+    <!-- Infinispan/kube-ping/jgroups for clustered cache -->
+    <dependency>
+        <groupId>org.infinispan</groupId>
+        <artifactId>infinispan-core</artifactId>
+        <version>10.1.5.Final</version>
+    </dependency>
+    <dependency>
+        <groupId>org.infinispan</groupId>
+        <artifactId>infinispan-commons</artifactId>
+        <version>10.1.5.Final</version>
+    </dependency>
+    <dependency>
+        <groupId>org.jgroups.kubernetes</groupId>
+        <artifactId>jgroups-kubernetes</artifactId>
+        <version>1.0.15.Final</version>
+    </dependency>
+    <dependency>
+        <groupId>org.jgroups</groupId>
+        <artifactId>jgroups</artifactId>
+        <version>4.2.1.Final</version>
+    </dependency>
+
+  </dependencies>
+
 </project>
