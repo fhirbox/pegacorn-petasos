@@ -31,7 +31,7 @@ public enum ComponentWatchdogStateEnum {
     COMPONENT_STATUS_ACTIVE("pegacorn.component.watchdog.state.active"),
     COMPONENT_STATUS_IDLE("pegacorn.component.watchdog.state.idle"),
     COMPONENT_STATUS_UNRESPONSIVE("pegacorn.component.watchdog.state.unresponsive"),
-    COMPONENT_STATUS_FAILED("pegacorn.component.watchdog.state.unresponsive");
+    COMPONENT_STATUS_FAILED("pegacorn.component.watchdog.state.failed");
     
     private String componentWatchdogState;
     

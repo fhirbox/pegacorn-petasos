@@ -31,28 +31,52 @@ import java.time.LocalDateTime;
  * @author ACT Health (Mark A. Hunter)
  */
 public class PetasosWUPWatchdogState {
-    private WorkUnitProcessorIdentifier wupID;
+    private FDN wupFDN;
     private ComponentWatchdogStateEnum wupStatus;
     private Instant lastStatusUpdate;
     
     
-    public PetasosWUPWatchdogState(WorkUnitProcessorIdentifier wupID,
+    public PetasosWUPWatchdogState(FDN wupFDN,
                                     ComponentWatchdogStateEnum wupStatus,
                                     Instant lastStatusUpdate) {
-        this.wupID = wupID;
+        this.wupFDN = wupFDN;
         this.wupStatus = wupStatus;
         this.lastStatusUpdate = lastStatusUpdate;
     }
     
-    public WorkUnitProcessorIdentifier getWUPID() {
-        return wupID;
+    /**
+     * @return the wupFDN
+     */
+    public FDN getWupFDN() {
+        return wupFDN;
     }
     
-    public ComponentWatchdogStateEnum getWUPStatus() {
+    /**
+     * @param wupFDN the wupFDN to set
+     */
+    public void setWupFDN(FDN wupFDN) {
+        this.wupFDN = wupFDN;
+    }
+    
+    public ComponentWatchdogStateEnum getWupStatus() {
         return wupStatus;
     }
+        
+    public void setWupStatus(ComponentWatchdogStateEnum wupStatus) {
+        this.wupStatus = wupStatus;
+    }
     
+    /**
+     * @return the lastStatusUpdate
+     */
     public Instant getLastStatusUpdate() {
         return lastStatusUpdate;
+    }
+    
+    /**
+     * @param lastStatusUpdate the lastStatusUpdate to set
+     */
+    public void setLastStatusUpdate(Instant lastStatusUpdate) {
+        this.lastStatusUpdate = lastStatusUpdate;
     }
 }

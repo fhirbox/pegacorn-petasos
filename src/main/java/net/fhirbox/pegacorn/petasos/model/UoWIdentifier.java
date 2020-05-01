@@ -28,6 +28,32 @@ package net.fhirbox.pegacorn.petasos.model;
  * @author mhunter
  */
 public class UoWIdentifier {
-    public String wupID;
-    public String identifierValue;
+    private FDN componentTypeHeirarchy;
+    private String relativeName;
+    
+    public UoWIdentifier(FDN componentType, String distinguishingAttribute){
+        this.componentTypeHeirarchy = componentType;
+        this.relativeName = distinguishingAttribute;
+    }
+
+    public FDN getComponentTypeHeirarchy() {
+        return componentTypeHeirarchy;
+    }
+
+    public void setComponentTypeHeirarchy(FDN componentType) {
+        this.componentTypeHeirarchy = componentType;
+    }
+
+    public String getRelativeName() {
+        return relativeName;
+    }
+
+    public void setRelativeName(String relativeName) {
+        this.relativeName = relativeName;
+    }
+    
+    public String toString(){
+        String fdnString = this.componentTypeHeirarchy.getQualifiedFDN() + ".UoW=" + this.relativeName;
+        return(fdnString);
+    }
 }

@@ -30,7 +30,6 @@ import java.time.Instant;
  * @author ACT Health (Mark A. Hunter)
  */
 public class ComponentInstanceCertificate {
-    private ComponentIdentifier componentID;
     private Instant registrationInstant;
     private Instant registrationEndInstant;
     private String hashKey;

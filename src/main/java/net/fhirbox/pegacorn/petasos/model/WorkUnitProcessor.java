@@ -28,7 +28,30 @@ package net.fhirbox.pegacorn.petasos.model;
  * @author mhunter
  */
 public class WorkUnitProcessor {
-    private WorkUnitProcessorIdentifier wupID;
+    private FDN wupFDN;
     private PetasosParcel activeParcel;
-    
+    /**
+     * @return the wupFDN
+     */
+    public FDN getWupFDN() {
+        return wupFDN;
+    }
+    /**
+     * @param wupFDN the wupFDN to set
+     */
+    public void setWupFDN(FDN wupFDN) {
+        this.wupFDN = wupFDN;
+    }
+    /**
+     * @return the activeParcel
+     */
+    public PetasosParcel getActiveParcel() {
+        return activeParcel;
+    }
+    /**
+     * @param activeParcel the activeParcel to set
+     */
+    public void setActiveParcel(PetasosParcel activeParcel) {
+        this.activeParcel = activeParcel;
+    }
 }

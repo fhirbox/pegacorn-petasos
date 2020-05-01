@@ -27,7 +27,7 @@ package net.fhirbox.pegacorn.petasos.model;
  *
  * @author mhunter
  */
-public class WorkUnitProcessorIdentifier extends ComponentIdentifier {
+public class WorkUnitProcessorIdentifier {
 
     public WorkUnitProcessorIdentifier(){
         super();

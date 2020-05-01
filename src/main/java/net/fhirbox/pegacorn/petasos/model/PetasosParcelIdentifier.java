@@ -27,7 +27,7 @@ package net.fhirbox.pegacorn.petasos.model;
  *
  * @author mhunter
  */
-public class PetasosParcelIdentifier extends ComponentIdentifier {
+public class PetasosParcelIdentifier {
     private String sourceWUPID; // the Component Identifier of the WUP as a String.
     private String uowID; // the UoW Identifier as a String.
     private String discriminator; // the unique bit for this PetasosParcel
@@ -38,15 +38,33 @@ public class PetasosParcelIdentifier extends ComponentIdentifier {
         this.discriminator = discriminator;
     }
     
-    public String getWUPID() {
+
+    public String getSourceWUPID() {
         return sourceWUPID;
     }
-    
-    public String getUoWID() {
+
+    public void setSourceWUPID(String sourceWUPID) {
+        this.sourceWUPID = sourceWUPID;
+    }
+
+    public String getUowID() {
         return uowID;
     }
-    
+
+    public void setUowID(String uowID) {
+        this.uowID = uowID;
+    }
+
     public String getDiscriminator() {
         return discriminator;
+    }
+
+    public void setDiscriminator(String discriminator) {
+        this.discriminator = discriminator;
+    }
+    
+    public String getFDN(){
+        String finalString = "WUP=" + this.sourceWUPID + ":uowID=" + this.uowID + ":Discriminator=" + this.discriminator;
+        return( finalString);
     }
 }

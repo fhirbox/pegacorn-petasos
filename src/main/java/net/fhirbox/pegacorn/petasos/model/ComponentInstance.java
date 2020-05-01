@@ -30,8 +30,83 @@ import java.util.Set;
  * @author ACT Health (Mark A. Hunter)
  */
 public class ComponentInstance {
+    private FDN componentTypeFDN;
     private ComponentInstanceCertificate ciRegistrationCertificate ;
-    private Set<ComponentIdentifier> containedComponents;
+    private Set<FDN> containedComponents;
     private ComponentInstanceStatus ciStatus;
     private Set<WorkUnitProcessor> enabledWUPSet;
+    private FDN componentInstanceFDN;
+    /**
+     * @return the componentInstanceFDN
+     */
+    public FDN getComponentFDN() {
+        return componentInstanceFDN;
+    }
+    /**
+     * @param componentInstanceFDN the componentInstanceFDN to set
+     */
+    public void setComponentFDN(FDN componentFDN) {
+        this.componentInstanceFDN = componentFDN;
+    }
+    /**
+     * @return the componentTypeFDN
+     */
+    public FDN getComponentTypeFDN() {
+        return componentTypeFDN;
+    }
+    /**
+     * @param componentTypeFDN the componentTypeFDN to set
+     */
+    public void setComponentTypeFDN(FDN componentTypeFDN) {
+        this.componentTypeFDN = componentTypeFDN;
+    }
+    /**
+     * @return the ciRegistrationCertificate
+     */
+    public ComponentInstanceCertificate getCiRegistrationCertificate() {
+        return ciRegistrationCertificate;
+    }
+    /**
+     * @param ciRegistrationCertificate the ciRegistrationCertificate to set
+     */
+    public void setCiRegistrationCertificate(ComponentInstanceCertificate ciRegistrationCertificate) {
+        this.ciRegistrationCertificate = ciRegistrationCertificate;
+    }
+    /**
+     * @return the containedComponents
+     */
+    public Set<FDN> getContainedComponents() {
+        return containedComponents;
+    }
+    /**
+     * @param containedComponents the containedComponents to set
+     */
+    public void setContainedComponents(Set<FDN> containedComponents) {
+        this.containedComponents = containedComponents;
+    }
+    /**
+     * @return the ciStatus
+     */
+    public ComponentInstanceStatus getCiStatus() {
+        return ciStatus;
+    }
+    /**
+     * @param ciStatus the ciStatus to set
+     */
+    public void setCiStatus(ComponentInstanceStatus ciStatus) {
+        this.ciStatus = ciStatus;
+    }
+    /**
+     * @return the enabledWUPSet
+     */
+    public Set<WorkUnitProcessor> getEnabledWUPSet() {
+        return enabledWUPSet;
+    }
+    /**
+     * @param enabledWUPSet the enabledWUPSet to set
+     */
+    public void setEnabledWUPSet(Set<WorkUnitProcessor> enabledWUPSet) {
+        this.enabledWUPSet = enabledWUPSet;
+    }
+
 }

@@ -31,7 +31,43 @@ import java.time.Instant;
  */
 public class ComponentInstanceStatus {
 
-        private ComponentWatchdogStateEnum componentStatus; 
-        private Instant lastCheck;
-        private Instant expectedComponentEndDate;
+    private ComponentWatchdogStateEnum componentStatus; 
+    private Instant lastCheck;
+    private Instant expectedComponentEndDate;
+    /**
+     * @return the componentStatus
+     */
+    public ComponentWatchdogStateEnum getComponentStatus() {
+        return componentStatus;
+    }
+    /**
+     * @param componentStatus the componentStatus to set
+     */
+    public void setComponentStatus(ComponentWatchdogStateEnum componentStatus) {
+        this.componentStatus = componentStatus;
+    }
+    /**
+     * @return the lastCheck
+     */
+    public Instant getLastCheck() {
+        return lastCheck;
+    }
+    /**
+     * @param lastCheck the lastCheck to set
+     */
+    public void setLastCheck(Instant lastCheck) {
+        this.lastCheck = lastCheck;
+    }
+    /**
+     * @return the expectedComponentEndDate
+     */
+    public Instant getExpectedComponentEndDate() {
+        return expectedComponentEndDate;
+    }
+    /**
+     * @param expectedComponentEndDate the expectedComponentEndDate to set
+     */
+    public void setExpectedComponentEndDate(Instant expectedComponentEndDate) {
+        this.expectedComponentEndDate = expectedComponentEndDate;
+    }
 }
