@@ -27,7 +27,7 @@ public class PetasosCacheManager {
     public DefaultCacheManager getCacheManager() {
         if (petasosCacheManager == null) {
             // configure a named clustered cache configuration using Infinispan defined defaults
-            GlobalConfigurationBuilder builder = new GlobalConfigurationBuilder().clusteredDefault().defaultCacheName("petasos-parcel-cache");
+            GlobalConfigurationBuilder builder = new GlobalConfigurationBuilder().clusteredDefault();
             
             // complete the config with a cluster name, jgroups config, and enable JMX statistics
             GlobalConfiguration global = builder.transport().clusterName("petasos-cluster").addProperty("configurationFile", "jgroups-petasos.xml").jmx().enable().build();
@@ -58,7 +58,8 @@ public class PetasosCacheManager {
                .build();
             
             // create a cache manager based on the configurations
-            petasosCacheManager = new DefaultCacheManager(global, local, true);
+            petasosCacheManager = new DefaultCacheManager(global);
+            petasosCacheManager.defineConfiguration("petasos-watchdog-cache", local);
             petasosCacheManager.defineConfiguration("petasos-watchdog-cache", "petatsos-parcel-cache", local);
         }
         return petasosCacheManager;
