@@ -27,7 +27,7 @@ package net.fhirbox.pegacorn.petasos.model;
  *
  * @author ACT Health (Mark A. Hunter)
  */
-public enum ComponentWatchdogStateEnum {
+public enum ComponentStatusEnum {
     COMPONENT_STATUS_ACTIVE("pegacorn.component.watchdog.state.active"),
     COMPONENT_STATUS_IDLE("pegacorn.component.watchdog.state.idle"),
     COMPONENT_STATUS_UNRESPONSIVE("pegacorn.component.watchdog.state.unresponsive"),
@@ -35,7 +35,7 @@ public enum ComponentWatchdogStateEnum {
     
     private String componentWatchdogState;
     
-    private ComponentWatchdogStateEnum(String componentWatchdogState ){
+    private ComponentStatusEnum(String componentWatchdogState ){
         this.componentWatchdogState = componentWatchdogState;
     }
     

@@ -28,19 +28,30 @@ package net.fhirbox.pegacorn.petasos.model;
  * @author mhunter
  */
 public class WorkUnitProcessor {
-    private FDN wupFDN;
+    private FDN processorFDN;
     private PetasosParcel activeParcel;
+    private FDN supportedFunctionFDN;
+    private ComponentStatusEnum processorStatus;
+    
+    
+    public WorkUnitProcessor(FDN newProcessorFDN, FDN newSupportedFunction ) {
+        this.processorFDN = newProcessorFDN;
+        this.activeParcel = null;
+        this.supportedFunctionFDN = newSupportedFunction;
+        this.processorStatus = ComponentStatusEnum.COMPONENT_STATUS_IDLE;
+    }
+    
     /**
      * @return the wupFDN
      */
-    public FDN getWupFDN() {
-        return wupFDN;
+    public FDN getProcessorFDN() {
+        return processorFDN;
     }
     /**
      * @param wupFDN the wupFDN to set
      */
-    public void setWupFDN(FDN wupFDN) {
-        this.wupFDN = wupFDN;
+    public void setProcessorFDN(FDN wupFDN) {
+        this.processorFDN = wupFDN;
     }
     /**
      * @return the activeParcel
@@ -53,5 +64,31 @@ public class WorkUnitProcessor {
      */
     public void setActiveParcel(PetasosParcel activeParcel) {
         this.activeParcel = activeParcel;
+    }
+    /**
+     * @return the supportedFunctionFDN
+     */
+    public FDN getSupportedFunctionFDN() {
+        return supportedFunctionFDN;
+    }
+    /**
+     * @param supportedFunctionFDN the supportedFunctionFDN to set
+     */
+    public void setSupportedFunctionFDN(FDN supportedFunctionFDN) {
+        this.supportedFunctionFDN = supportedFunctionFDN;
+    }
+
+    /**
+     * @return the processorStatus
+     */
+    public ComponentStatusEnum getProcessorStatus() {
+        return processorStatus;
+    }
+
+    /**
+     * @param processorStatus the processorStatus to set
+     */
+    public void setProcessorStatus(ComponentStatusEnum processorStatus) {
+        this.processorStatus = processorStatus;
     }
 }

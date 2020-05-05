@@ -14,6 +14,7 @@ import javax.enterprise.context.ApplicationScoped;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
+import org.infinispan.eviction.EvictionType;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.CacheMode;
@@ -44,23 +45,27 @@ public class PetasosCacheManager {
           // https://docs.jboss.org/infinispan/10.1/apidocs/org/infinispan/configuration/cache/AbstractStoreConfigurationBuilder.html#preload(boolean)
            Configuration local = new ConfigurationBuilder().statistics().enable().clustering().cacheMode(CacheMode.DIST_SYNC)
             .persistence()
-            .passivation(false)
-            .addSingleFileStore()
+            .passivation(true) // only write the cache overflow to disk
+            .addSingleFileStore() // the disk cache
                .preload(true) 
                .shared(false)
                .fetchPersistentState(true)
                .ignoreModifications(false)
                .purgeOnStartup(false)
-               .location("/tmp")
+               .location("/tmp") // need to make configurable
                .async()
                   .enabled(true)
                   .threadPoolSize(5)
-               .build();
+            .memory()
+//               .storageType(StorageType.BINARY) // let Infinispan decide?
+               .evictionType(EvictionType.MEMORY)
+               .size(1000000000) // cache size in bytes, need to make configurable
+            .build();
             
             // create a cache manager based on the configurations
             petasosCacheManager = new DefaultCacheManager(global);
-            petasosCacheManager.defineConfiguration("petasos-watchdog-cache", local);
-            petasosCacheManager.defineConfiguration("petasos-watchdog-cache", "petatsos-parcel-cache", local);
+            petasosCacheManager.defineConfiguration("petasos-parcel-cache", local);
+            petasosCacheManager.defineConfiguration("petasos-watchdog-cache", "petasos-parcel-cache", local);
         }
         return petasosCacheManager;
     }

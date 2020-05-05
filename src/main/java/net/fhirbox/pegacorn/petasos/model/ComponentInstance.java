@@ -23,90 +23,83 @@
  */
 package net.fhirbox.pegacorn.petasos.model;
 
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.Collection;
 
 /**
  *
  * @author ACT Health (Mark A. Hunter)
  */
 public class ComponentInstance {
-    private FDN componentTypeFDN;
-    private ComponentInstanceCertificate ciRegistrationCertificate ;
-    private Set<FDN> containedComponents;
-    private ComponentInstanceStatus ciStatus;
-    private Set<WorkUnitProcessor> enabledWUPSet;
-    private FDN componentInstanceFDN;
+    private ArrayList<FDN> supportedFunctionSet;
+    private ArrayList<ComponentInstance> containedComponents;
+    private ArrayList<WorkUnitProcessor> enabledWUPSet;
+    private FDN componentFDN;
+    private ComponentInstanceStatus componentStatus; 
+    
+
     /**
      * @return the componentInstanceFDN
      */
     public FDN getComponentFDN() {
-        return componentInstanceFDN;
+        return componentFDN;
     }
     /**
      * @param componentInstanceFDN the componentInstanceFDN to set
      */
     public void setComponentFDN(FDN componentFDN) {
-        this.componentInstanceFDN = componentFDN;
+        this.componentFDN = componentFDN;
     }
     /**
-     * @return the componentTypeFDN
+     * @return the supportedFunctionSet
      */
-    public FDN getComponentTypeFDN() {
-        return componentTypeFDN;
+    public Collection<FDN> getSupportedFunctionSet() {
+        return supportedFunctionSet;
     }
     /**
-     * @param componentTypeFDN the componentTypeFDN to set
+     * @param supportedFunctionSet the supportedFunctionSet to set
      */
-    public void setComponentTypeFDN(FDN componentTypeFDN) {
-        this.componentTypeFDN = componentTypeFDN;
-    }
-    /**
-     * @return the ciRegistrationCertificate
-     */
-    public ComponentInstanceCertificate getCiRegistrationCertificate() {
-        return ciRegistrationCertificate;
-    }
-    /**
-     * @param ciRegistrationCertificate the ciRegistrationCertificate to set
-     */
-    public void setCiRegistrationCertificate(ComponentInstanceCertificate ciRegistrationCertificate) {
-        this.ciRegistrationCertificate = ciRegistrationCertificate;
+    public void setSupportedFunctionSet(Collection<FDN> newSupportedFunctionSet) {
+        this.supportedFunctionSet.clear();
+        this.supportedFunctionSet.addAll(newSupportedFunctionSet);
     }
     /**
      * @return the containedComponents
      */
-    public Set<FDN> getContainedComponents() {
+    public Collection<ComponentInstance> getContainedComponents() {
         return containedComponents;
     }
     /**
      * @param containedComponents the containedComponents to set
      */
-    public void setContainedComponents(Set<FDN> containedComponents) {
-        this.containedComponents = containedComponents;
+    public void setContainedComponents(Collection<ComponentInstance> containedComponents) {
+        this.containedComponents.clear();
+        this.containedComponents.addAll(containedComponents);
     }
     /**
-     * @return the ciStatus
+     * @return the componentStatus
      */
-    public ComponentInstanceStatus getCiStatus() {
-        return ciStatus;
+    public ComponentInstanceStatus getComponentStatus() {
+        return componentStatus;
     }
     /**
-     * @param ciStatus the ciStatus to set
+     * @param componentStatus the componentStatus to set
      */
-    public void setCiStatus(ComponentInstanceStatus ciStatus) {
-        this.ciStatus = ciStatus;
+    public void setComponentStatus(ComponentInstanceStatus ciStatus) {
+        this.componentStatus = ciStatus;
     }
     /**
      * @return the enabledWUPSet
      */
-    public Set<WorkUnitProcessor> getEnabledWUPSet() {
+    public Collection<WorkUnitProcessor> getEnabledWUPSet() {
         return enabledWUPSet;
     }
     /**
      * @param enabledWUPSet the enabledWUPSet to set
      */
-    public void setEnabledWUPSet(Set<WorkUnitProcessor> enabledWUPSet) {
-        this.enabledWUPSet = enabledWUPSet;
+    public void setEnabledWUPSet(Collection<WorkUnitProcessor> enabledWUPSet) {
+        this.enabledWUPSet.clear();
+        this.enabledWUPSet.addAll(enabledWUPSet);
     }
 
 }

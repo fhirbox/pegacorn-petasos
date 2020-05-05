@@ -23,8 +23,11 @@
  */
 package net.fhirbox.pegacorn.petasos.agent;
 
-import net.fhirbox.pegacorn.petasos.model.ComponentWatchdogStateEnum;
-import net.fhirbox.pegacorn.petasos.model.PetasosParcelRegistration;
+import java.util.Collection;
+
+import net.fhirbox.pegacorn.petasos.model.ComponentStatusEnum;
+import net.fhirbox.pegacorn.petasos.model.FDN;
+import net.fhirbox.pegacorn.petasos.model.PetasosParcel;
 import net.fhirbox.pegacorn.petasos.model.PetasosWUPActionSuggestionEnum;
 import net.fhirbox.pegacorn.petasos.model.UoW;
 import net.fhirbox.pegacorn.petasos.model.UoWProcessingOutcomeEnum;
@@ -33,13 +36,14 @@ import net.fhirbox.pegacorn.petasos.model.UoWProcessingOutcomeEnum;
  *
  * @author ACT Health (Mark A. Hunter)
  */
-public interface PetasosWUPAgentInterface {
-    public PetasosParcelRegistration registerActivity(String wupID, UoW theUoW);
-    public PetasosWUPActionSuggestionEnum startActivity(String parcelID);
-    public PetasosWUPActionSuggestionEnum finishActivity(String parcelID, UoW theFinishedUoW, UoWProcessingOutcomeEnum theFinishedUoWOutcome);
-    public UoWProcessingOutcomeEnum finaliseActivity(String parcelID, UoW theFinishedUoW);
-    public PetasosWUPActionSuggestionEnum updateOperationalStatus( String wupID, Long presentInstant, ComponentWatchdogStateEnum presentState );
-    public PetasosWUPActionSuggestionEnum updateActivityStatus( String parcelID, Long presentInstant, ComponentWatchdogStateEnum presentState );
-    public PetasosWUPActionSuggestionEnum getPeerActivityStatus( String parcelID );
-    
+public interface PetasosAgentInterface {
+    public void registerWorkUnitProcessor( FDN myProcessorFDN, FDN mySupportedFunctionFDN );
+    public PetasosParcel registerActivity(FDN myWUPFDN, FDN myComponentFunctionFDN, UoW theUoW, FDN precursorParcelFDN);
+    public PetasosWUPActionSuggestionEnum startActivity(FDN parcelFDN);
+    public PetasosWUPActionSuggestionEnum finishActivity(FDN parcelFDN, UoW theFinishedUoW, UoWProcessingOutcomeEnum theFinishedUoWOutcome);
+    public UoWProcessingOutcomeEnum finaliseActivity(FDN parcelFDN, UoW theFinishedUoW);
+    public PetasosWUPActionSuggestionEnum updateOperationalStatus( FDN wupFDN, Long presentInstant, ComponentStatusEnum presentState );
+    public PetasosWUPActionSuggestionEnum updateActivityStatus( FDN parcelFDN, Long presentInstant, ComponentStatusEnum presentState );
+    public PetasosWUPActionSuggestionEnum getPeerActivityStatus( FDN parcelFDN );
+    public Collection<PetasosParcel> getRelevantParcels(FDN myWUPFDN, FDN myComponentFunctionFDN );
 }

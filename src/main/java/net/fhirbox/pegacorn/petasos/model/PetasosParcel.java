@@ -25,9 +25,10 @@ package net.fhirbox.pegacorn.petasos.model;
 
 import java.time.Instant;
 import java.util.HashSet;
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.Collection;
 
-import org.jgroups.util.UUID;
+
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.slf4j.Logger;
@@ -39,92 +40,146 @@ import org.slf4j.LoggerFactory;
  */
 public class PetasosParcel {
     private PetasosParcelRegistration parcelRegistration;
-    private UoW actualUnitOfWork;
-    private Set<FDN> successorParcelFDNs;
+    private UoW containedUoW;
+    private ArrayList<FDN> successorParcelSet;
     private PetasosWUPWatchdogState taskProcessorState;
     private FDN precursorParcelFDN;
     
-    private PetasosParcelIdentifier parcelID;
 
     private static final Logger LOG = LoggerFactory.getLogger(PetasosParcel.class);
-
-    // for JSON-to-object conversion where we have a full ID  
-    public void setParcelID(PetasosParcelIdentifier parcelID) {
-        this.parcelID = parcelID;
+    public PetasosParcel(PetasosParcelRegistration theParcelRegistration) {
+        this.parcelRegistration = theParcelRegistration;
     }
     
-    public UoW getUoW() {
-        return actualUnitOfWork;
+    public PetasosParcel(PetasosParcelRegistration theParcelRegistration, UoW theUoW, FDN thePrecursorFDN, PetasosWUPWatchdogState theWUPStatus) {
+        this.parcelRegistration = theParcelRegistration;
+        this.containedUoW = theUoW;
+        this.successorParcelSet = new ArrayList<>();
+        this.precursorParcelFDN = new FDN(thePrecursorFDN);
+        this.taskProcessorState = theWUPStatus;
     }
     
-    public void setUoW(UoW uow) {
-        this.actualUnitOfWork = uow;
+    public PetasosParcel( PetasosParcel originalParcel) {
+        this.parcelRegistration = new PetasosParcelRegistration(originalParcel.getParcelRegistration());
+        this.containedUoW = new UoW(originalParcel.getContainedUoW());
+        this.successorParcelSet = new ArrayList<>();
+        this.successorParcelSet.addAll(originalParcel.getSuccessorParcelSet());
+        this.taskProcessorState = originalParcel.getTaskProcessorState();
+        this.precursorParcelFDN = new FDN(originalParcel.getPrecursorParcel());
     }
     
-    public void setTaskProcessorState(PetasosWUPWatchdogState taskProcessorState) {
-        this.taskProcessorState = taskProcessorState;
-    }
-    
-    public void addSuccessorParcel(FDN parcelFDN) {
-        successorParcelFDNs.add(parcelFDN);
-    }
-    
-    public void setSuccessorParcels(Set<FDN> successorParcelFDNs) {
-        this.successorParcelFDNs = successorParcelFDNs;
-    }
-    
-    public void setPrecursorParcel(FDN parcelFDN) {
-        precursorParcelFDN = parcelFDN;
-    }
-    
-    public FDN getPrecursorParcelFDN() {
-        return precursorParcelFDN;
-    }
-    
-    public void setParcelFDN(FDN parcelFDN) {
-        parcelRegistration.setParcelFDN(parcelFDN);
-    }
-    
-    public FDN getParcelFDN() {
-        return new FDN(parcelID.getFDN());
-    }
-    
-    public void setPetasosParcelRegistration(PetasosParcelRegistration parcelRegistration) {
-        this.parcelRegistration = parcelRegistration;
-    }
-    
+    /**
+     * @return the parcelRegistration
+     */
     public PetasosParcelRegistration getParcelRegistration() {
         return parcelRegistration;
     }
+    /**
+     * @param parcelRegistration the parcelRegistration to set
+     */
+    public void setParcelRegistration(PetasosParcelRegistration parcelRegistration) {
+        this.parcelRegistration = parcelRegistration;
+    }
+    /**
+     * @return the containedUoW
+     */
+    public UoW getContainedUoW() {
+        return containedUoW;
+    }
+    /**
+     * @param containedUoW the containedUoW to set
+     */
+    public void setContainedUoW(UoW containedUoW) {
+        this.containedUoW = new UoW(containedUoW);
+    }
+    /**
+     * @return the successorParcels
+     */
+    public Collection<FDN> getSuccessorParcelSet() {
+        return successorParcelSet;
+    }
+    /**
+     * @param successorParcels the successorParcels to set
+     */
+    public void setSuccessorParcels(Collection<FDN> successorParcels) {
+        this.successorParcelSet.clear();
+        this.successorParcelSet.addAll(successorParcels);
+    }
+    /**
+     * @return the taskProcessorState
+     */
+    public PetasosWUPWatchdogState getTaskProcessorState() {
+        return taskProcessorState;
+    }
+    /**
+     * @param taskProcessorState the taskProcessorState to set
+     */
+    public void setTaskProcessorState(PetasosWUPWatchdogState taskProcessorState) {
+        this.taskProcessorState = taskProcessorState;
+    }
+    /**
+     * @return the precursorParcel
+     */
+    public FDN getPrecursorParcel() {
+        return precursorParcelFDN;
+    }
+    /**
+     * @param precursorParcel the precursorParcel to set
+     */
+    public void setPrecursorParcel(FDN precursorParcel) {
+        this.precursorParcelFDN = precursorParcel;
+    }
+    
+    public FDN getParcelFDN() {
+        return parcelRegistration.getParcelFDN();
+    }
+    
+    public void setUoW(UoW uow) {
+        this.containedUoW = uow;
+    }
 
+    public void setPetasosParcelRegistration(PetasosParcelRegistration parcelRegistration) {
+        this.parcelRegistration = parcelRegistration;
+    }
+
+    
     public String getParcelJSON() {
         JSONObject parcelJSON = new JSONObject();
 
-        JSONObject parcelIDInfo = new JSONObject().put("wupID", parcelID.getSourceWUPID())
-                .put("uowID",  parcelID.getUowID()).put("discriminator", parcelID.getDiscriminator());
-        JSONObject registrationInfo = new JSONObject().put("parcelID", parcelIDInfo).put("parcelStartDate", parcelRegistration.getParcelStartDate().toEpochMilli())
-                        .put("parcelExpectedCompletionDate", parcelRegistration.getExpectedCompletionDate().toEpochMilli());
-        parcelJSON.put("parcelRegistration", registrationInfo);
-             
-        JSONObject uowIdentifierInfo = new JSONObject().put("relativeName", actualUnitOfWork.getUowID().getRelativeName())
-                .put("hierarchyFDN", actualUnitOfWork.getUowID().getComponentTypeHeirarchy().getQualifiedFDN());
+        JSONObject registrationInfo = new JSONObject().put("parcelFDN", parcelRegistration.getParcelFDN().getQualifiedFDN()).put("parcelInstantiationInstant", parcelRegistration.getParcelInstantiationInstant().toEpochMilli())
+                          .put("parcelExpectedCompletionInstant", parcelRegistration.getParcelExpectedCompletionInstant().toEpochMilli())
+                          .put("supportingFunctionFDN", parcelRegistration.getSupportingFunctionFDN().getQualifiedFDN());
+
+        JSONArray wupList = new JSONArray();
+        if (parcelRegistration.getRegisteredWUPList() != null) {
+            parcelRegistration.getRegisteredWUPList().forEach(fdn -> {
+                wupList.put(fdn.getQualifiedFDN());
+            });
+            registrationInfo.put("registeredWUPList", wupList);
+        }
         
+        if (parcelRegistration.getContainedUoW() != null) {
+            registrationInfo.put("containedUoW", parcelRegistration.getContainedUoW().getQualifiedFDN());
+        }
+
+        parcelJSON.put("parcelRegistration", registrationInfo);
+
         JSONArray ingressContent = new JSONArray();
-        if (actualUnitOfWork.getUowIngressContent() != null) {
-            actualUnitOfWork.getUowIngressContent().forEach(ingress -> {
+        if (containedUoW.getUowIngressContent() != null) {
+            containedUoW.getUowIngressContent().forEach(ingress -> {
                 ingressContent.put(new JSONObject((String)ingress));
             });
         }
 
         JSONArray egressContent = new JSONArray();
-        if (actualUnitOfWork.getUowEgressContent() != null) {
-            actualUnitOfWork.getUowEgressContent().forEach(egress -> {
+        if (containedUoW.getUowEgressContent() != null) {
+            containedUoW.getUowEgressContent().forEach(egress -> {
                 egressContent.put(new JSONObject((String)egress));
             });
         }
-        
-        JSONObject uowInfo = new JSONObject().put("uowID", uowIdentifierInfo).put("ingressContent", ingressContent)
-            .put("egressContent", egressContent).put("processingOutcome", actualUnitOfWork.getUowProcessingOutcome().getUoWProcessingOutcome());
+  
+        JSONObject uowInfo = new JSONObject().put("uowFDN", containedUoW.getUoWFDN().getQualifiedFDN()).put("requiredFunctionFDN", containedUoW.getRequiredFunctionFDN().getQualifiedFDN())
+                .put("ingressContent", ingressContent).put("egressContent", egressContent).put("processingOutcome", containedUoW.getUowProcessingOutcome().getUoWProcessingOutcome());
         parcelJSON.put("uow", uowInfo);
         
 
@@ -163,27 +218,34 @@ public class PetasosParcel {
         
         // create the parcel and registration information
         JSONObject registrationObject = parcelJSON.getJSONObject("parcelRegistration");
-        PetasosParcelIdentifier parcelID = new PetasosParcelIdentifier(registrationObject.getJSONObject("parcelID").getString("wupID"),
-                registrationObject.getJSONObject("parcelID").getString("uowID"),
-                registrationObject.getJSONObject("parcelID").getString("discriminator"));
-        PetasosParcel parcel = new PetasosParcel();
-        parcel.setParcelID(parcelID);
-        
-        PetasosParcelRegistration parcelRegistration = new PetasosParcelRegistration(new FDN(parcelID.getFDN()));
-        parcelRegistration.setParcelStartDate(Instant.ofEpochMilli(registrationObject.getLong("parcelStartDate")));
-        if (registrationObject.has("parcelExpectedCompletionDate")) {
-            if (registrationObject.getLong("parcelExpectedCompletionDate") > 0) {
-                parcelRegistration.setExpectedCompletionDate(Instant.ofEpochMilli(registrationObject.getLong("parcelStartDate")));                    
+
+        PetasosParcelRegistration parcelRegistration = new PetasosParcelRegistration(new FDN(registrationObject.getString("parcelFDN")));
+        parcelRegistration.setParcelInstantiationInstant(Instant.ofEpochMilli(registrationObject.getLong("parcelInstantiationInstant")));
+        if (registrationObject.has("parcelExpectedCompletionInstant")) {
+            if (registrationObject.getLong("parcelExpectedCompletionInstant") > 0) {
+                parcelRegistration.setParcelExpectedCompletionInstant(Instant.ofEpochMilli(registrationObject.getLong("parcelExpectedCompletionInstant")));                    
             }
         }
-        parcel.setPetasosParcelRegistration(parcelRegistration);
- 
-        // create the UoW object
-        UoW uow = new UoW();
-        UoWIdentifier uowID = new UoWIdentifier(new FDN(parcelJSON.getJSONObject("uow").getString("hierarchyFDN")),
-                                                parcelJSON.getJSONObject("uow").getString("relativeName"));
+        parcelRegistration.setSupportingFunctionFDN(new FDN(registrationObject.getString("supportingFunctionFDN")));
 
-        uow.setUowID(uowID);
+        if (registrationObject.has("registeredWUPList")) {
+            ArrayList<FDN> wupList = new ArrayList<>();
+            registrationObject.getJSONArray("registeredWUPList").forEach(wupFDN -> {
+                wupList.add(new FDN((String)wupFDN));
+            });
+            parcelRegistration.setRegisteredWUPList(wupList);
+        }
+
+        if (registrationObject.has("containedUoW")) {
+            parcelRegistration.setContainedUoW(new FDN(registrationObject.getString("containedUoW")));
+        }
+        
+        //create the parcel
+        PetasosParcel parcel = new PetasosParcel(parcelRegistration);
+
+        // create the UoW object        
+        UoW uow = new UoW(new FDN(parcelJSON.getJSONObject("uow").getString("uowFDN")), new FDN(parcelJSON.getJSONObject("uow").getString("requiredFunctionFDN")));
+
         if (parcelJSON.getJSONObject("uow").has("ingressContent")) {
             HashSet<String> ingressContent = new HashSet<>();
             parcelJSON.getJSONObject("uow").getJSONArray("ingressContent").forEach(ingress -> {
@@ -204,25 +266,24 @@ public class PetasosParcel {
         parcel.setUoW(uow);
 
         if (parcelJSON.has("successorParcels")) {
-            HashSet<FDN> ppis = new HashSet<>();
+            HashSet<FDN> successorParcelFDNs = new HashSet<>();
             parcelJSON.getJSONArray("successorParcels").forEach(successor -> {
-                FDN ppi  = new FDN();
-                ppi.populateFDN((String)successor);
-                ppis.add(ppi);
+                FDN successorParcelFDN  = new FDN();
+                successorParcelFDN.populateFDN((String)successor);
+                successorParcelFDNs.add(successorParcelFDN);
             });
-            parcel.setSuccessorParcels(ppis);
+            parcel.setSuccessorParcels(successorParcelFDNs);
         }
 
         if (parcelJSON.has("watchdogStatus")) {
             PetasosWUPWatchdogState watchdogState = new PetasosWUPWatchdogState(new FDN(parcelJSON.getJSONObject("watchdogStatus").getString("wupFDN")),
-                    ComponentWatchdogStateEnum.valueOf(parcelJSON.getJSONObject("watchdogStatus").getString("wupStatus")),
+                    ComponentStatusEnum.valueOf(parcelJSON.getJSONObject("watchdogStatus").getString("wupStatus")),
                     Instant.ofEpochMilli(parcelJSON.getJSONObject("watchdogStatus").getLong("lastStatusUpdate")));
             parcel.setTaskProcessorState(watchdogState);
         }
        
-        if (parcelJSON.has("precursorParcel")) {
-            FDN precursorParcelFDN = new FDN(parcelJSON.getJSONObject("precursorParcel").getString("qualifiedFDN"));
-            parcel.setPrecursorParcel(precursorParcelFDN);
+        if (parcelJSON.has("precursorParcelFDN")) {
+            parcel.setPrecursorParcel(new FDN(parcelJSON.getString("precursorParcelFDN")));
         }
 
         return parcel;

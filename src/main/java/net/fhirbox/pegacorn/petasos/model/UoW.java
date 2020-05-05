@@ -23,6 +23,8 @@
  */
 package net.fhirbox.pegacorn.petasos.model;
 
+import java.time.Instant;
+import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -30,17 +32,75 @@ import java.util.Set;
  * @author mhunter
  */
 public class UoW {
-    private UoWIdentifier uowID;
-    private Set<String> uowIngressContent; // JSON Objects
-    private Set<String> uowEgressContent; // JSON Objects
+    /**
+     * The FDN (fully distinguished name) of the UoW. Built from a combination of
+     * the required "Component Function FDN" that would be required to process it
+     * plus some unique characteristic.
+     */
+    private FDN uowFDN;
+    /**
+     * The FDN (fully distinguished name) of the Component Function that is required 
+     * to process this UoW. This value could be derived from the uowFDN - but for 
+     * ease of utilisation and future-proofness - we have separated it here.
+     */
+    private FDN requiredFunctionFDN;
+    /**
+     * The set of (JSON) objects that represent the ingress (or starting set) of 
+     * information of this UoW. 
+     */
+    private HashSet<String> uowIngressContent; // JSON Objects
+    /**
+     * The set of (JSON) objects created as part of the completion of this UoW. 
+     */
+    private HashSet<String> uowEgressContent; // JSON Objects
+    /**
+     * The (enum) outcome status of the processing of this UoW. 
+     */
     private UoWProcessingOutcomeEnum uowProcessingOutcome;
-
-    public UoWIdentifier getUowID() {
-        return uowID;
+    
+  
+    // Constructers
+    
+    public UoW (FDN functionFDN, Set<String> theInput) {
+        String generatedInstanceValue = Long.toString(Instant.now().getNano());
+        this.uowIngressContent = new HashSet<>(theInput);
+        this.uowEgressContent = new HashSet<>();
+        this.uowProcessingOutcome = UoWProcessingOutcomeEnum.PEGACORN_UOW_OUTCOME_NOTSTARTED;
+        this.uowFDN = new FDN(functionFDN);
+        RDN newRDN = new RDN("InstanceQualifier", generatedInstanceValue);
+        this.uowFDN.appendRDN(newRDN); 
+    }
+    
+    public UoW (FDN functionFDN, String uowQualifier,Set<String> theInput) {
+        this.uowIngressContent = new HashSet<>(theInput);
+        this.uowEgressContent = new HashSet<>();
+        this.uowProcessingOutcome = UoWProcessingOutcomeEnum.PEGACORN_UOW_OUTCOME_NOTSTARTED;
+        this.uowFDN = new FDN(functionFDN);
+        RDN newRDN = new RDN("InstanceQualifier", uowQualifier);
+        this.uowFDN.appendRDN(newRDN);
+    }
+    
+    public UoW (UoW originalUoW) {
+        this.uowFDN = new FDN(originalUoW.getUoWFDN());
+        this.requiredFunctionFDN = new FDN(originalUoW.getRequiredFunctionFDN());
+        this.uowIngressContent = new HashSet<>();
+        this.uowIngressContent.addAll(originalUoW.getUowIngressContent());
+        this.uowEgressContent = new HashSet<>();
+        this.uowEgressContent.addAll(originalUoW.getUowEgressContent());
+        this.uowProcessingOutcome = originalUoW.getUowProcessingOutcome();
+    }
+    
+    public UoW (FDN uowFDN, FDN requiredFunctionFDN) {
+        this.uowFDN = uowFDN;
+        this.requiredFunctionFDN = requiredFunctionFDN;
     }
 
-    public void setUowID(UoWIdentifier uowID) {
-        this.uowID = uowID;
+    public FDN getUoWFDN() {
+        return uowFDN;
+    }
+
+    public void setUoWFDN(FDN uowID) {
+        this.uowFDN = uowID;
     }
 
     public Set<String> getUowIngressContent() {
@@ -48,7 +108,8 @@ public class UoW {
     }
 
     public void setUowIngressContent(Set<String> uowIngressContent) {
-        this.uowIngressContent = uowIngressContent;
+        this.uowIngressContent.clear();
+        this.uowIngressContent.addAll(uowIngressContent);
     }
 
     public Set<String> getUowEgressContent() {
@@ -56,7 +117,8 @@ public class UoW {
     }
 
     public void setUowEgressContent(Set<String> uowEgressContent) {
-        this.uowEgressContent = uowEgressContent;
+        this.uowEgressContent.clear();
+        this.uowEgressContent.addAll(uowEgressContent);
     }
 
     public UoWProcessingOutcomeEnum getUowProcessingOutcome() {
@@ -65,5 +127,19 @@ public class UoW {
 
     public void setUowProcessingOutcome(UoWProcessingOutcomeEnum uowProcessingOutcome) {
         this.uowProcessingOutcome = uowProcessingOutcome;
+    }
+
+    /**
+     * @return the requiredFunctionFDN
+     */
+    public FDN getRequiredFunctionFDN() {
+        return requiredFunctionFDN;
+    }
+
+    /**
+     * @param requiredFunctionFDN the requiredFunctionFDN to set
+     */
+    public void setRequiredFunctionFDN(FDN requiredFunction) {
+        this.requiredFunctionFDN = requiredFunction;
     }
 }

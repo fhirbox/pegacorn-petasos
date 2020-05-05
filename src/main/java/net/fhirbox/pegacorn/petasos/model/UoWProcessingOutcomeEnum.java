@@ -30,7 +30,8 @@ package net.fhirbox.pegacorn.petasos.model;
 public enum UoWProcessingOutcomeEnum {
     PEGACORN_UOW_OUTCOME_SUCCESS("pegacorn.uow.processingoutcome.success"),
     PEGACORN_UOW_OUTCOME_FAILED("pegacorn.uow.processingoutcome.failed"),
-    PEGACORN_UOW_OUTCOME_INCOMPLETE("pegacorn.uow.processingoutcome.incomplete");
+    PEGACORN_UOW_OUTCOME_INCOMPLETE("pegacorn.uow.processingoutcome.incomplete"),
+    PEGACORN_UOW_OUTCOME_NOTSTARTED("pegacorn.uow.processingoutcome.not_started");
     
     private String uowProcessingOutcome;
     

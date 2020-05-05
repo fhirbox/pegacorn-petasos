@@ -24,49 +24,139 @@
 package net.fhirbox.pegacorn.petasos.model;
 
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.UUID;
 
 /**
  *
  * @author ACT Health (Mark A. Hunter)
  */
 public class PetasosParcelRegistration {
+    private ArrayList<FDN> registeredWUPList;
     private FDN parcelFDN;
-    private Instant parcelStartDate;
-    private Instant parcelExpectedCompletionDate;
+    private FDN containedUoW;
+    private FDN supportingFunctionFDN;
+    private Instant parcelInstantiationInstant;
+    private Instant parcelExpectedCompletionInstant;
 
 
     public PetasosParcelRegistration(FDN parcelFDN) {
         this.parcelFDN = parcelFDN;
-        parcelStartDate = Instant.now();
-    }
-
-    public PetasosParcelRegistration(FDN parcelFDN, long expectedDuration) {
-        this.parcelFDN = parcelFDN;
-        parcelStartDate = Instant.now();
-        parcelExpectedCompletionDate = parcelStartDate.plusMillis(expectedDuration);
+        parcelInstantiationInstant = Instant.now();
     }
     
+    
+    public PetasosParcelRegistration(FDN wupFDN, FDN theUoW, FDN theFunction, Instant creationTime ) {
+        this.registeredWUPList = new ArrayList<>();
+        this.registeredWUPList.add(wupFDN);
+        this.parcelFDN = new FDN(theUoW);
+        this.parcelFDN.appendRDN(new RDN("ParcelQualifier", UUID.randomUUID().toString()));
+        this.supportingFunctionFDN = new FDN(theFunction);
+        this.parcelInstantiationInstant = creationTime;
+        this.parcelExpectedCompletionInstant = Instant.MAX;
+    }
+    
+    public PetasosParcelRegistration( FDN wupFDN, FDN theUoW, FDN theFunction, Instant creationTime, Instant endTime ) {
+        this.registeredWUPList = new ArrayList<>();
+        this.registeredWUPList.add(wupFDN);
+        this.parcelFDN = new FDN(theUoW);
+        this.parcelFDN.appendRDN(new RDN("ParcelQualifier", UUID.randomUUID().toString()));
+        this.supportingFunctionFDN = new FDN(theFunction);
+        this.parcelInstantiationInstant = creationTime;
+        this.parcelExpectedCompletionInstant = endTime;
+    }
+    
+    public PetasosParcelRegistration( Collection<FDN> theWUPList, FDN theUoW, FDN theFunction, Instant creationTime, Instant endTime ) {
+        this.registeredWUPList = new ArrayList<>();
+        this.registeredWUPList.addAll(theWUPList);
+        this.parcelFDN = new FDN(theUoW);
+        this.parcelFDN.appendRDN(new RDN("ParcelQualifier", UUID.randomUUID().toString()));
+        this.supportingFunctionFDN = new FDN(theFunction);
+        this.parcelInstantiationInstant = creationTime;
+        this.parcelExpectedCompletionInstant = endTime;
+    }   
+    
+    public PetasosParcelRegistration(PetasosParcelRegistration originalParcelReg) {
+        this.registeredWUPList = new ArrayList<>();
+        this.registeredWUPList.addAll(originalParcelReg.getRegisteredWUPList());
+        this.parcelFDN = new FDN(originalParcelReg.getParcelFDN());
+        this.containedUoW = new FDN(originalParcelReg.getContainedUoW());
+        this.supportingFunctionFDN = new FDN(originalParcelReg.getSupportingFunctionFDN());
+        this.parcelInstantiationInstant = originalParcelReg.getParcelInstantiationInstant();
+        this.parcelExpectedCompletionInstant = originalParcelReg.getParcelExpectedCompletionInstant();
+    }
+    
+    /**
+     * @return the registeredWUPList
+     */
+    public Collection<FDN> getRegisteredWUPList() {
+        return registeredWUPList;
+    }
+
+    /**
+     * @param registeredWUPList the registeredWUPList to set
+     */
+    public void setRegisteredWUPList(Collection<FDN> registeredWUPList) {
+        this.registeredWUPList.clear();
+        this.registeredWUPList.addAll(registeredWUPList);
+    }
+
+    /**
+     * @return the containedUoW
+     */
+    public FDN getContainedUoW() {
+        return containedUoW;
+    }
+
+    /**
+     * @param containedUoW the containedUoW to set
+     */
+    public void setContainedUoW(FDN containedUoW) {
+        this.containedUoW = containedUoW;
+    }
+
+    /**
+     * @return the supportingFunctionFDN
+     */
+    public FDN getSupportingFunctionFDN() {
+        return supportingFunctionFDN;
+    }
+
+    /**
+     * @param supportingFunctionFDN the supportingFunctionFDN to set
+     */
+    public void setSupportingFunctionFDN(FDN supportingFunctionFDN) {
+        this.supportingFunctionFDN = supportingFunctionFDN;
+    }
+
+    /**
+     * @return the parcelExpectedCompletionInstant
+     */
+    public Instant getParcelExpectedCompletionInstant() {
+        return parcelExpectedCompletionInstant;
+    }
+
+    /**
+     * @param parcelExpectedCompletionInstant the parcelExpectedCompletionInstant to set
+     */
+    public void setParcelExpectedCompletionInstant(Instant parcelExpectedCompletionInstant) {
+        this.parcelExpectedCompletionInstant = parcelExpectedCompletionInstant;
+    }
+
+    public FDN getParcelFDN() {
+        return this.parcelFDN;
+    }
+
     public void setParcelFDN(FDN parcelFDN) {
         this.parcelFDN = parcelFDN;
     }
-    
-    public void setParcelStartDate(Instant parcelStartDate) {
-        this.parcelStartDate = parcelStartDate;
+
+    public Instant getParcelInstantiationInstant() {
+        return parcelInstantiationInstant;
     }
-    
-    public Instant getParcelStartDate() {
-        return parcelStartDate;
-    }
-    
-    public Instant getExpectedCompletionDate() {
-        return parcelExpectedCompletionDate;
-    }
-    
-    public void setExpectedCompletionDate(Instant parcelExpectedCompletionDate) {
-        this.parcelExpectedCompletionDate = parcelExpectedCompletionDate;
-    }
-    
-    public FDN getParcelFDN() {
-        return parcelFDN;
+
+    public void setParcelInstantiationInstant(Instant parcelStateDate) {
+        this.parcelInstantiationInstant = parcelStateDate;
     }
 }
