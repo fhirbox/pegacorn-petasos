@@ -124,7 +124,7 @@ public class FDN
         return(lShortFDN);       
     }
     
-    String getQualifiedFDN()
+    public String getQualifiedFDN()
     {
          String lShortFDN = new String();
         if( !rdnElementSet.isEmpty() )

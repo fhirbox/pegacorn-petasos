@@ -14,6 +14,9 @@ import javax.enterprise.inject.Produces;
 import javax.inject.Inject;
 import javax.enterprise.context.ApplicationScoped;
 import org.infinispan.manager.DefaultCacheManager;
+
+import net.fhirbox.pegacorn.petasos.model.FDN;
+
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.eviction.EvictionType;
@@ -50,5 +53,9 @@ public class PetasosNode {
             node = new PetasosNode();
         }
         return node;
+    }
+    
+    public void registerWUPWithOtherSites(WatchdogEntry watchdogEntry) {
+        
     }
 }
