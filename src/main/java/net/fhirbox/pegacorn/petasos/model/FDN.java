@@ -122,6 +122,12 @@ public class FDN
             }
         }
         return(lShortFDN);       
+    }    
+    
+    public FDN getParentFDN() {
+        ArrayList<RDN> elementList = new ArrayList<RDN>(this.rdnElementSet);
+        elementList.remove(elementList.size() - 1);
+        return new FDN(elementList);
     }
     
     public String getQualifiedFDN()
@@ -143,7 +149,19 @@ public class FDN
             }
         }
         return(lShortFDN);       
-    } 
+    }
+    
+    public String getRDNValue(String name) {
+        ListIterator<RDN> rdnIterator = rdnElementSet.listIterator();
+        while( rdnIterator.hasNext() )
+        {
+            RDN rdn = rdnIterator.next();
+            if (rdn.getTypeName() == name) {
+                return rdn.getTypeValue();
+            }
+        }
+        return null;
+    }
     
     public String toString(){
         return(getQualifiedFDN());
