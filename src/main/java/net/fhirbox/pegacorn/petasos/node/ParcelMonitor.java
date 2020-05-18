@@ -3,29 +3,17 @@ package net.fhirbox.pegacorn.petasos.node;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import net.fhirbox.pegacorn.petasos.model.ComponentStatusEnum;
-import net.fhirbox.pegacorn.petasos.model.FDN;
-import net.fhirbox.pegacorn.petasos.model.PetasosParcel;
-
+import net.fhirbox.pegacorn.petasos.common.PetasosParcelJSON;
 import java.util.concurrent.CompletionStage;
 
-import javax.inject.Inject;
-
-import java.awt.Event;
-import java.time.Duration;
-import java.time.Instant;
-import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.CompletableFuture;
 
 import org.infinispan.Cache;
 import org.infinispan.notifications.Listener;
-import org.infinispan.notifications.cachelistener.annotation.CacheEntryModified;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryCreated;
-import org.infinispan.notifications.cachelistener.event.CacheEntryModifiedEvent;
 import org.infinispan.notifications.cachelistener.event.CacheEntryCreatedEvent;
-import org.infinispan.notifications.cachelistener.event.CacheEntryEvent;
 
 // clustered to ensure all nodes get the notification, async (sync=false) to ensure listener
 // is notified in a separate thread so our listener processing is non-blocking.
@@ -42,10 +30,13 @@ public class ParcelMonitor {
     // TODO: does Node need to keep its own record of currently active parcel FDNs??
     @CacheEntryCreated
     public CompletionStage<Void> monitorParcel(CacheEntryCreatedEvent<String, String> event) {
-        PetasosParcel parcel = PetasosParcel.createParcelFromJSON(event.getValue());
+        PetasosParcelJSON parcelJSON = new PetasosParcelJSON(event.getValue());
+        long instantiationInstantMillis = parcelJSON.getParcelInstantiationInstant();
+        long expectedCompletionInstantMillis = parcelJSON.getParcelExpectedCompletionInstant();
+
         // At the moment it's only a one-step timer. End date plus a buffer.
-        long millisToWaitForCompletion = Duration.between(parcel.getParcelRegistration().getParcelInstantiationInstant(), Instant.now()).toMillis()
-                                            + 200; // 200 is just temporary arbitrary amount of ms to add as a buffer
+        // 200ms is just temporary arbitrary amount of ms to add as a buffer
+        long millisToWaitForCompletion = expectedCompletionInstantMillis - instantiationInstantMillis + 200;
 
         if (millisToWaitForCompletion < 0) {
             // The parcel is overdue, need to initiate failover, so set the execution of the
@@ -79,17 +70,21 @@ public class ParcelMonitor {
         
         @Override
         public void run() {
-            // Parcel end date passed. if parcel is on the cache, check it has a
-            // Processing outcome.
-            // If not on cache assume UoW is finished. If on the cache it could be
+            // Parcel end date passed. If on the cache it could be
             // that not written to Hestia. Check if there's a processingOutcome and if not
             // assume WUP is not able to complete the UoW. Alert the node there is a problem.
-            String parcelJSON = petasosParcelCache.get(uowQualifiedFDN);
-            if (parcelJSON != null) {
-                PetasosParcel parcel = PetasosParcel.createParcelFromJSON(parcelJSON);
-                if (parcel.getContainedUoW().getUowProcessingOutcome() == null) {
-                    node.processLateParcel(uowQualifiedFDN);
-                }
+            String parcelString = petasosParcelCache.get(uowQualifiedFDN);
+            
+            // If not on cache assume UoW completed or failed and has been written out to
+            // Hestia and removed.
+            if (parcelString == null) {
+                return;
+            }
+
+            PetasosParcelJSON parcelJSON = new PetasosParcelJSON(parcelString);
+
+            if (parcelJSON.getUoWProcessingOutcome() == null) {
+                node.processLateParcel(uowQualifiedFDN);
             }
         }
         
@@ -100,5 +95,5 @@ public class ParcelMonitor {
         public void setCacheKey(String uowQualifiedFDN) {
             this.uowQualifiedFDN = uowQualifiedFDN;
         }
-    }
+    }   
 }

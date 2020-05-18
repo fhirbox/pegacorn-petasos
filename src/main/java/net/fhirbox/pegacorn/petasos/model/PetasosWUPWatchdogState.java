@@ -24,7 +24,6 @@
 package net.fhirbox.pegacorn.petasos.model;
 
 import java.time.Instant;
-import java.time.LocalDateTime;
 
 /**
  *

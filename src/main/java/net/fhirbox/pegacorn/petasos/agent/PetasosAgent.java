@@ -36,10 +36,12 @@ import org.infinispan.manager.DefaultCacheManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import net.fhirbox.pegacorn.petasos.common.PetasosParcelJSON;
 import net.fhirbox.pegacorn.petasos.model.ComponentStatusEnum;
 import net.fhirbox.pegacorn.petasos.model.FDN;
 import net.fhirbox.pegacorn.petasos.model.PetasosParcel;
 import net.fhirbox.pegacorn.petasos.model.PetasosParcelRegistration;
+import net.fhirbox.pegacorn.petasos.model.PetasosParcelStatusEnum;
 import net.fhirbox.pegacorn.petasos.model.PetasosWUPActionSuggestionEnum;
 import net.fhirbox.pegacorn.petasos.model.UoW;
 import net.fhirbox.pegacorn.petasos.model.UoWProcessingOutcomeEnum;
@@ -52,12 +54,7 @@ import net.fhirbox.pegacorn.petasos.node.WatchdogEntry;
  */
 public class PetasosAgent implements PetasosAgentInterface{
 
-    private static final Logger LOG = LoggerFactory.getLogger(PetasosAgent.class);
-    
-    private PetasosParcel parcel;
-    private FDN previousParcelFDN;
-    private FDN supportedFunctionFDN;
-    private FDN agentFDN;
+    private static final Logger LOG = LoggerFactory.getLogger(PetasosAgent.class);    
     
     private boolean criticalWrite = false;
 
@@ -90,7 +87,7 @@ public class PetasosAgent implements PetasosAgentInterface{
         // so for now a watchdog entry is going to be a flattened state plus supported function
         // FDN String. Petasos care about WUPs and Nodes so will limit to that as component
         // instance model too complex (recursive) to flatten onto cache.
-        //Check if registered, check if function registered, if no to any of those, json-ise
+        // Check if registered, check if function registered, if no to any of those, json-ise
         // and put on cache
         // key to watchdog cache will be component qualified fdn string
         // Do we need an injection point as well?
@@ -101,6 +98,8 @@ public class PetasosAgent implements PetasosAgentInterface{
         } else {
             // exists so do we add a supported function, replace, or ??
         }
+        // do we need to make sure this is successful to make sure the WUP is known to other
+        // sites in case it's needed for failover?
         node.registerWUPWithOtherSites(watchdogEntry);
     }
     
@@ -112,11 +111,12 @@ public class PetasosAgent implements PetasosAgentInterface{
         if (precursorParcelFDN != null) {
             parcel.setPrecursorParcel(precursorParcelFDN);
         }
+        parcel.setParcelStatus(PetasosParcelStatusEnum.PARCEL_STATUS_REGISTERED);
 
         // If not in cache, the putIfAbsent will return null.
         // Use UoW FDN as key as they are a consistent value across sites since they are based
         // on function FDN (not unique across sites) plus a hash
-        String parcelJSON = petasosParcelCache.putIfAbsent(theUoW.getUoWFDN().getQualifiedFDN(), parcel.getParcelJSON());
+        String parcelJSON = petasosParcelCache.putIfAbsent(theUoW.getUoWFDN().getQualifiedFDN(), new PetasosParcelJSON(parcel).toJSONString());
         if (parcelJSON == null) {
             // new UoW so forward to other sites REST service points
             if (criticalWrite == true) {
@@ -126,7 +126,7 @@ public class PetasosAgent implements PetasosAgentInterface{
         } else {
             // got value off the cache so return the registration object from cached parcel since
             // it was there first
-            parcel = PetasosParcel.createParcelFromJSON(parcelJSON);
+            parcel = new PetasosParcelJSON(parcelJSON).createParcel();
         }
         
         // Add the current parcel ID to the Watchdog entry so as to provide a quick
@@ -146,22 +146,23 @@ public class PetasosAgent implements PetasosAgentInterface{
     public PetasosWUPActionSuggestionEnum startActivity(FDN parcelFDN) {
         // since we only have the parcel FDN, need to get the UoW FDN which is one
         // level up from the parcel
-        PetasosParcel parcel = PetasosParcel.createParcelFromJSON(petasosParcelCache.get(parcelFDN.getParentFDN().getQualifiedFDN()));
-
+        PetasosParcelJSON parcelJSON = new PetasosParcelJSON(petasosParcelCache.get(parcelFDN.getParentFDN().getQualifiedFDN()));
+        ComponentStatusEnum wupStatus = parcelJSON.getWupStatus();
+        
         // if the parcel is currently being actioned, ignore it (should this be continue or pause?)
-        if (parcel.getTaskProcessorState().getWupStatus() == ComponentStatusEnum.COMPONENT_STATUS_ACTIVE) {
+        if (wupStatus == ComponentStatusEnum.COMPONENT_STATUS_ACTIVE) {
             return PetasosWUPActionSuggestionEnum.WUP_ACTION_SUGGESTION_PAUSE;
         }
-        
+
         // if idle, start the activity
-        if (parcel.getTaskProcessorState().getWupStatus() == ComponentStatusEnum.COMPONENT_STATUS_IDLE) {
+        if (wupStatus == ComponentStatusEnum.COMPONENT_STATUS_IDLE) {
             // do we need to check that the component is on our pod??
-            parcel.getTaskProcessorState().setWupStatus(ComponentStatusEnum.COMPONENT_STATUS_ACTIVE);
+            parcelJSON.setWupStatus(ComponentStatusEnum.COMPONENT_STATUS_ACTIVE);
         }
-        parcel.getTaskProcessorState().setLastStatusUpdate(Instant.now());
+        parcelJSON.setWUPLastStatusUpdate(Instant.now().toEpochMilli());
 
         // put updated parcel on the cache
-        petasosParcelCache.put(parcel.getContainedUoW().getUoWFDN().getQualifiedFDN(), parcel.getParcelJSON());
+        petasosParcelCache.replace(parcelFDN.getParentFDN().getQualifiedFDN(), parcelJSON.toJSONString());
 
         // new UoW so forward to other sites REST service points
         if (criticalWrite == true) {
@@ -172,21 +173,21 @@ public class PetasosAgent implements PetasosAgentInterface{
     }
 
     @Override    
-    public PetasosWUPActionSuggestionEnum finishActivity(FDN parcelFDN, UoW theFinishedUoW, UoWProcessingOutcomeEnum theFinishedUoWOutcome) {
-        PetasosParcel parcel = PetasosParcel.createParcelFromJSON(petasosParcelCache.get(parcelFDN.getParentFDN().getQualifiedFDN()));
+    public PetasosWUPActionSuggestionEnum finishActivity(FDN parcelFDN, UoW theFinishedUoW) {
+        PetasosParcelJSON parcelJSON = new PetasosParcelJSON(petasosParcelCache.get(parcelFDN.getParentFDN().getQualifiedFDN()));
+        ComponentStatusEnum wupStatus = parcelJSON.getWupStatus();
 
         // if active, now it's finished set back to idle
-        if (parcel.getTaskProcessorState().getWupStatus() == ComponentStatusEnum.COMPONENT_STATUS_ACTIVE) {
+        if (wupStatus == ComponentStatusEnum.COMPONENT_STATUS_ACTIVE) {
             // do we need to check that the component is on our pod??
-            parcel.getTaskProcessorState().setWupStatus(ComponentStatusEnum.COMPONENT_STATUS_IDLE);
+            parcelJSON.setWupStatus(ComponentStatusEnum.COMPONENT_STATUS_IDLE);
         }
-        parcel.getTaskProcessorState().setLastStatusUpdate(Instant.now());
-        parcel.setContainedUoW(theFinishedUoW);
-        // thought the processing outcome would be set by UoW?? Should the Agent do this?
-        parcel.getContainedUoW().setUowProcessingOutcome(theFinishedUoWOutcome);
+        parcelJSON.setWUPLastStatusUpdate(Instant.now().toEpochMilli());
+        parcelJSON.setUoW(theFinishedUoW);
+        parcelJSON.setParcelStatus(PetasosParcelStatusEnum.PARCEL_STATUS_FINISHED);
 
         // put updated parcel on the cache
-        petasosParcelCache.put(parcel.getContainedUoW().getUoWFDN().getQualifiedFDN(), parcel.getParcelJSON());
+        petasosParcelCache.replace(parcelFDN.getParentFDN().getQualifiedFDN(), parcelJSON.toJSONString());
 
         // new UoW so forward to other sites REST service points
         if (criticalWrite == true) {
@@ -199,6 +200,10 @@ public class PetasosAgent implements PetasosAgentInterface{
     @Override
     public UoWProcessingOutcomeEnum finaliseActivity(FDN parcelFDN, UoW theFinishedUoW) {
         // not sure what to do here??
+        PetasosParcelJSON parcelJSON = new PetasosParcelJSON(petasosParcelCache.get(parcelFDN.getParentFDN().getQualifiedFDN()));
+        parcelJSON.setParcelStatus(PetasosParcelStatusEnum.PARCEL_STATUS_FINALISED);
+
+        petasosParcelCache.replace(parcelFDN.getParentFDN().getQualifiedFDN(), parcelJSON.toJSONString());
         return(UoWProcessingOutcomeEnum.PEGACORN_UOW_OUTCOME_SUCCESS);
     }
 
@@ -217,12 +222,16 @@ public class PetasosAgent implements PetasosAgentInterface{
     
     @Override
     public PetasosWUPActionSuggestionEnum updateActivityStatus(FDN parcelFDN, Long presentInstant, ComponentStatusEnum presentState) {
-        PetasosParcel parcel = PetasosParcel.createParcelFromJSON(petasosParcelCache.get(parcelFDN.getParentFDN().getQualifiedFDN()));
-        parcel.getTaskProcessorState().setWupStatus(presentState);
-        parcel.getTaskProcessorState().setLastStatusUpdate(Instant.ofEpochMilli(presentInstant));
+        PetasosParcelJSON parcelJSON = new PetasosParcelJSON(petasosParcelCache.get(parcelFDN.getParentFDN().getQualifiedFDN()));
+        parcelJSON.setWupStatus(presentState);
+        // just make sure we're in milliseconds so have to do ofMilli then toMilli
+        parcelJSON.setWUPLastStatusUpdate(Instant.ofEpochMilli(presentInstant).toEpochMilli());
+        petasosParcelCache.replace(parcelFDN.getParentFDN().getQualifiedFDN(), parcelJSON.toJSONString());
+
         // don't know what should be checked here, if the caller is OK then it makes sense to continue
         // Is the caller reporting self-problems?? Or is this just a straight 'still processing'
-        // type call?
+        // type call? Might need to update parcel status if issue?
+        // TODO:: clarify what this does to the parcel status for each case
         return(PetasosWUPActionSuggestionEnum.WUP_ACTION_SUGGESTION_CONTINUE);
     }
 
@@ -230,9 +239,8 @@ public class PetasosAgent implements PetasosAgentInterface{
     public PetasosWUPActionSuggestionEnum getPeerActivityStatus(FDN parcelFDN) {
         PetasosWUPActionSuggestionEnum suggestedAction = PetasosWUPActionSuggestionEnum.WUP_ACTION_SUGGESTION_PAUSE;
 
-        PetasosParcel parcel = PetasosParcel.createParcelFromJSON(petasosParcelCache.get(parcelFDN.getParentFDN().getQualifiedFDN()));
-
-        switch (parcel.getTaskProcessorState().getWupStatus()) {
+        PetasosParcelJSON parcelJSON = new PetasosParcelJSON(petasosParcelCache.get(parcelFDN.getParentFDN().getQualifiedFDN()));
+        switch (parcelJSON.getWupStatus()) {
             // a WUP is processing the parcel
             case COMPONENT_STATUS_ACTIVE:
                 suggestedAction = PetasosWUPActionSuggestionEnum.WUP_ACTION_SUGGESTION_PAUSE;
@@ -258,8 +266,7 @@ public class PetasosAgent implements PetasosAgentInterface{
     
     public void setCriticalWrite(boolean criticalWrite) {
         this.criticalWrite = criticalWrite;
-    }
-    
+    }    
     
     public class ParcelForwardTask implements Callable<Integer> {
         // TBD: this will be either REST or server:port combo?

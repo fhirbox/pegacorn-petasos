@@ -16,7 +16,6 @@ import java.util.concurrent.Future;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
-import javax.enterprise.inject.Produces;
 import javax.inject.Inject;
 import javax.enterprise.concurrent.ManagedExecutorService;
 import javax.enterprise.context.ApplicationScoped;
@@ -24,14 +23,11 @@ import org.infinispan.manager.DefaultCacheManager;
 
 import net.fhirbox.pegacorn.petasos.node.ParcelMonitor;
 import net.fhirbox.pegacorn.petasos.model.FDN;
-import net.fhirbox.pegacorn.petasos.model.PetasosParcel;
-
 import org.infinispan.Cache;
 
 @ApplicationScoped
 public class PetasosNode {
  
-    private PetasosNode node;
     private FDN nodeFDN;
 
     @Resource(name = "DefaultManagedExecutorService")
@@ -57,7 +53,6 @@ public class PetasosNode {
         ParcelMonitor parcelMonitor = new ParcelMonitor();
         parcelMonitor.setNodeReference(this);
         petasosParcelCache.addListener(parcelMonitor);
-
     }
     
     public PetasosNode() {
@@ -67,6 +62,7 @@ public class PetasosNode {
         nodeFDN = new FDN("deployment=aether.site=site-a.pod="+System.getenv("MY_POD_NAME")+".component=PetasosNode");
         WatchdogEntry watchdogEntry = new WatchdogEntry(nodeFDN.getQualifiedFDN());
         startHeartbeat();
+        initialiseHestiaConnection();
     }
         
     public void registerWUPWithOtherSites(WatchdogEntry watchdogEntry) {
@@ -84,8 +80,8 @@ public class PetasosNode {
                 if (forwardTaskOutcome.get() != 1) {
                     // flag site as unavailable?? or heartbeat should do this?
                     // ArrayList needs FDN (to check status) and endpoint (to connect)?
-                    // Need to monitor site status? no, heartbeat should provide updates,
-                    // just need to check available site
+                    // Need to monitor site status? Keep it simple, heartbeat should
+                    // provide updates, all we need to do is try to register the WUP
                 }
             }
         }
@@ -94,10 +90,10 @@ public class PetasosNode {
             // there is probably no point doing anything here
         }
         catch (ExecutionException ee) {
-            // might add a return value. Do we care if it doesn't work? If the forward
+            // Might add a return value. Do we care if it doesn't work? If the forward
             // fails are we assuming there is a problem with the site and need to flag
-            // it as unresponsive. This should be done in the task itself so maybe 
-            // don't do anything for now.
+            // it as unresponsive? If a forward fails then the site/pod endpoint could not
+            // be contacted. Heartbeat should pick this up so no action required?
         }
     }
 
@@ -124,6 +120,14 @@ public class PetasosNode {
         }
     }
     
+    private void initialiseHestiaConnection() {
+        // need jdbc string, will be over SSL to Postgres
+        // Hestia db sharded by service so separate dbs per service
+        // Need to be configured per service and Petasos will need them
+        // Also remember the Writer will have to break down the parcel to match
+        // the db design
+    }
+    
     // kick off a neverending thread which will do the heartbeat process
     private void startHeartbeat() {
         HeartbeatMonitor heartbeat = new HeartbeatMonitor();
@@ -131,9 +135,9 @@ public class PetasosNode {
     }
     
     public class HeartbeatMonitor implements Callable<Integer> {
-        // needs access to cache (updating shared cache)
+        // needs access to cache (updating watchdog shared cache)
         // needs access to endpoints (forwarding status to other sites)
-        // needs node FDN (updating shared cache)
+        // needs node FDN (updating watchdog shared cache)
         // move to separate class file once Node-to-Node communication mechanism is known
         // If using a cache listener, needs to ignore own FDN, needs to keep track of all
         // petasos nodes in an internal quick lookup map. If status of one changes to failed
@@ -143,7 +147,9 @@ public class PetasosNode {
         }
     }
     
-    
+    // just placeholder, there will be a heartbeat client, server and status/parcel
+    // update server and client for each node (although parcels only move between
+    // site endpoints). These are apparently to be implemented using Netty.
     public class CIStatusForwardTask implements Callable<Integer> {
         // TBD: this will be either REST or server:port combo?
         // TODO: change the var name once comm type is known

@@ -40,7 +40,7 @@ public interface PetasosAgentInterface {
     public void registerWorkUnitProcessor( FDN myProcessorFDN, FDN mySupportedFunctionFDN );
     public PetasosParcel registerActivity(FDN myWUPFDN, FDN myComponentFunctionFDN, UoW theUoW, FDN precursorParcelFDN);
     public PetasosWUPActionSuggestionEnum startActivity(FDN parcelFDN);
-    public PetasosWUPActionSuggestionEnum finishActivity(FDN parcelFDN, UoW theFinishedUoW, UoWProcessingOutcomeEnum theFinishedUoWOutcome);
+    public PetasosWUPActionSuggestionEnum finishActivity(FDN parcelFDN, UoW theFinishedUoW);
     public UoWProcessingOutcomeEnum finaliseActivity(FDN parcelFDN, UoW theFinishedUoW);
     public PetasosWUPActionSuggestionEnum updateOperationalStatus( FDN wupFDN, Long presentInstant, ComponentStatusEnum presentState );
     public PetasosWUPActionSuggestionEnum updateActivityStatus( FDN parcelFDN, Long presentInstant, ComponentStatusEnum presentState );
