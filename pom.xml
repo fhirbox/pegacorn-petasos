@@ -50,6 +50,15 @@
       <artifactId>log4j-slf4j-impl</artifactId>
     </dependency>
     
+    <dependency>
+        <groupId>net.fhirbox.pegacorn</groupId>
+        <artifactId>pegacorn-deployment</artifactId>
+        <version>${project.version}</version>
+        <type>jar</type>
+        <scope>compile</scope>
+    </dependency>
+    
+    
     <!-- JSON -->
     <dependency>
         <groupId>org.json</groupId>

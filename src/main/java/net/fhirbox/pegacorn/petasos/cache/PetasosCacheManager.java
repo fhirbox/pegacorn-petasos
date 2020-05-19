@@ -10,8 +10,12 @@ package net.fhirbox.pegacorn.petasos.cache;
 
 import javax.annotation.PreDestroy;
 import javax.enterprise.inject.Produces;
+import javax.inject.Inject;
 import javax.enterprise.context.ApplicationScoped;
 import org.infinispan.manager.DefaultCacheManager;
+
+import net.fhirbox.pegacorn.deploymentproperties.PetasosProperties;
+
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.eviction.EvictionType;
@@ -22,6 +26,9 @@ import org.infinispan.configuration.cache.CacheMode;
 @ApplicationScoped
 public class PetasosCacheManager {
  
+    @Inject
+    PetasosProperties petasosProperties;
+    
     private DefaultCacheManager petasosCacheManager;
 
     @Produces
@@ -52,14 +59,14 @@ public class PetasosCacheManager {
                .fetchPersistentState(true)
                .ignoreModifications(false)
                .purgeOnStartup(false)
-               .location("/tmp") // need to make configurable
+               .location(petasosProperties.getCacheOverflowDirectory())
                .async()
                   .enabled(true)
                   .threadPoolSize(5)
             .memory()
 //               .storageType(StorageType.BINARY) // let Infinispan decide?
                .evictionType(EvictionType.MEMORY)
-               .size(1000000000) // cache size in bytes, need to make configurable
+               .size(petasosProperties.getCacheSizeInBytes()) // cache size in bytes, need to make configurable
             .build();
             
             // create a cache manager based on the configurations

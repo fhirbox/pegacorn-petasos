@@ -63,6 +63,7 @@ public class PetasosNode {
         WatchdogEntry watchdogEntry = new WatchdogEntry(nodeFDN.getQualifiedFDN());
         startHeartbeat();
         initialiseHestiaConnection();
+        startAuditMonitor();
     }
         
     public void registerWUPWithOtherSites(WatchdogEntry watchdogEntry) {
@@ -126,6 +127,22 @@ public class PetasosNode {
         // Need to be configured per service and Petasos will need them
         // Also remember the Writer will have to break down the parcel to match
         // the db design
+    }
+    
+    private void startAuditMonitor() {
+        // create a writer and let it go.
+        // Currently allowing 1 writer per node type per site. Not sure how to manager
+        // multiple writers as have not found anything in Infinispan API to get owner or
+        // (more importantly) the back up owner (i.e. the node that wrote the entry) of a
+        // cache entry, so not sure how multiple writers repeatedly passing over the cache
+        // could be co-ordinated efficiently.
+        // Writer registers itself and checks against CI Status Map for any active writers.
+        // If none, updates its status to active and checks again to make sure none has started
+        // in the meantime. If one has, it checks the status time and if its last status update is 
+        // earliest (i.e. it started first) it keeps going, else it puts itself back in an idle
+        // state and then periodically checks the active writer's status. If the active writer's
+        // status is no longer active whenever it checks, it takes over following the same
+        // process as above.
     }
     
     // kick off a neverending thread which will do the heartbeat process
