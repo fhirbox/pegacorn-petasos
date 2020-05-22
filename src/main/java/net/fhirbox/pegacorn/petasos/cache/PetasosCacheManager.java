@@ -69,10 +69,13 @@ public class PetasosCacheManager {
                .size(petasosProperties.getCacheSizeInBytes()) // cache size in bytes, need to make configurable
             .build();
             
-            // create a cache manager based on the configurations
+            // create a cache manager based on the gloabl configuration
             petasosCacheManager = new DefaultCacheManager(global);
+            // define a set of caches based on the local configuration
             petasosCacheManager.defineConfiguration("petasos-parcel-cache", local);
             petasosCacheManager.defineConfiguration("petasos-watchdog-cache", "petasos-parcel-cache", local);
+            petasosCacheManager.defineConfiguration("petasos-uow-to-wup-map", "petasos-parcel-cache", local);
+            petasosCacheManager.defineConfiguration("capability-map", "petasos-parcel-cache", local);
         }
         return petasosCacheManager;
     }

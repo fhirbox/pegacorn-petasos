@@ -11,6 +11,7 @@ package net.fhirbox.pegacorn.petasos.node;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
@@ -22,13 +23,26 @@ import javax.enterprise.context.ApplicationScoped;
 import org.infinispan.manager.DefaultCacheManager;
 
 import net.fhirbox.pegacorn.petasos.node.ParcelMonitor;
+import net.fhirbox.pegacorn.petasos.common.PetasosParcelJSON;
+import net.fhirbox.pegacorn.petasos.common.PetasosWUPWatchdogStateJSON;
 import net.fhirbox.pegacorn.petasos.model.FDN;
+import net.fhirbox.pegacorn.petasos.model.PetasosWUPWatchdogState;
+
 import org.infinispan.Cache;
 
 @ApplicationScoped
 public class PetasosNode {
- 
+    // not very nice, but to keep simple string lists in Infinispan without having to
+    // serialise and deserialise
+    public static final String MAP_ENTRY_DELIMITER = "#@#@";
+
     private FDN nodeFDN;
+    // map keyed by UoW FDN with associated list of parcels which share that UoW FDN
+    private ConcurrentHashMap<String,List<String>> multicasts = new ConcurrentHashMap<>(128);
+    // map keyed by parcel FDN with associated UoW FDN
+    private ConcurrentHashMap<String, String> activeMulticasts = new ConcurrentHashMap<>(128);
+    private Object multicastSemaphore = new Object();
+    private Object capabilitySemaphore = new Object();
 
     @Resource(name = "DefaultManagedExecutorService")
     ManagedExecutorService executor;
@@ -39,6 +53,10 @@ public class PetasosNode {
     // The clustered cache
     private Cache<String, String> petasosParcelCache;
     private Cache<String, String> petasosWatchdogCache;
+    // shared map which contains a map of key => uowFDN, value => list of WUP FDNs (multicast use only)
+    private Cache<String, String> uowToWUPMap;
+    // shared map which contains a map of key => WUP Function FDNs to => list of WUP FDNs
+    private Cache<String, String> capabilityMap;
     
     // TODO: other configured sites and endpoints
     // need to know comms mechanism for types of activity to implement this
@@ -50,6 +68,7 @@ public class PetasosNode {
         // get or create the clustered cache which will hold the transactions (aka Units of Work)
         petasosParcelCache = petasosCacheManager.getCache("petasos-parcel-cache", true);
         petasosWatchdogCache = petasosCacheManager.getCache("petasos-watchdog-cache", true);
+        uowToWUPMap = petasosCacheManager.getCache("petasos-uow-to-wup-map", true);
         ParcelMonitor parcelMonitor = new ParcelMonitor();
         parcelMonitor.setNodeReference(this);
         petasosParcelCache.addListener(parcelMonitor);
@@ -59,14 +78,14 @@ public class PetasosNode {
         // create FDN and register CI Status, deployment name, site and pod need to 
         // come from system vars. The pod name provides the uniqueness in this instance as only
         // one Node per pod and Kubernetes won't allow duplicate pod names.
-        nodeFDN = new FDN("deployment=aether.site=site-a.pod="+System.getenv("MY_POD_NAME")+".component=PetasosNode");
-        WatchdogEntry watchdogEntry = new WatchdogEntry(nodeFDN.getQualifiedFDN());
+        nodeFDN = new FDN("deployment=aether.site=site-a.pod="+System.getenv("MY_POD_NAME")+".node=PetasosNode");
+
         startHeartbeat();
         initialiseHestiaConnection();
         startAuditMonitor();
     }
         
-    public void registerWUPWithOtherSites(WatchdogEntry watchdogEntry) {
+    public void registerWUPWithOtherSites(PetasosWUPWatchdogState watchdogEntry) {
         ArrayList<Callable<Integer>> taskList = new ArrayList<>();
         
         siteConnectionEndpoints.forEach(connectionEndpoint -> {
@@ -83,6 +102,7 @@ public class PetasosNode {
                     // ArrayList needs FDN (to check status) and endpoint (to connect)?
                     // Need to monitor site status? Keep it simple, heartbeat should
                     // provide updates, all we need to do is try to register the WUP
+                    // if it fails, bad luck
                 }
             }
         }
@@ -98,27 +118,65 @@ public class PetasosNode {
         }
     }
 
-    public void updateCIStatus(WatchdogEntry watchdogEntry) {
-        petasosWatchdogCache.put(watchdogEntry.getWatchdogState().getWupFDN().getQualifiedFDN(), watchdogEntry.toJSONString());
-        // TODO: forward to other sites
+    // capture multicasts so we can keep track of them. The UoW FDN is a functional FDN
+    // plus hash and should be the same across all sites.
+/*    public void registerMulticastParcel(String uowQualifiedFDN, String parcelFDN) {
+        synchronized (this.multicastSemaphore) {
+            if (this.multicasts.containsKey(uowQualifiedFDN) == false) {
+                multicasts.put(uowQualifiedFDN, new ArrayList<String>());
+            }
+            this.multicasts.get(uowQualifiedFDN).add(parcelFDN);
+        }
+    }*/
+
+    public void registerMulticastParcel(String uowQualifiedFDN, PetasosParcelJSON parcelJSON) {
+        synchronized (this.multicastSemaphore) {
+            if (uowToWUPMap.containsKey(uowQualifiedFDN) == false) {
+                uowToWUPMap.put(uowQualifiedFDN, parcelJSON.getWUPFDN());
+            } else {
+                // not nice but Infinispan will serialize/deserialize lists and needs a whitelist'
+                // of classes to serialize/deserialize
+                StringBuilder wupFDNs = new StringBuilder().append(MAP_ENTRY_DELIMITER).append(parcelJSON.getWUPFDN());
+                uowToWUPMap.replace(uowQualifiedFDN, wupFDNs.toString());
+            }
+        }
     }
     
-    public void processLateParcel(String uowQualifiedFDN) {
-        // failover processing by owning node?
-        // check if owning node state is ok. If owning node is OK let it do the
-        // reallocation, else we need an owning node to flag the parcel is theirs as
-        // all bets are off and all Nodes try to inject into their
-        // own version of the WUP and whoever gets there first, wins.
-        // TODO: assumption is that a WUP will generate a new parcel
-        // Do we need to force to Hestia and remove unfinished one since the Writer can't
-        // go around removing unfinished parcels unless a decent buffer from the expected
-        // end date is added.
-        //Plus the parcel will remain on the cache.
-        String parcelJSON = petasosParcelCache.get(uowQualifiedFDN);
-        if (parcelJSON == null) {
-            // UoW ended up finishing (only way it could be removed) so do nothing
-            return;
+    public void registerWUPCapability(FDN wupFDN, FDN functionFDN) {
+        synchronized (this.capabilitySemaphore) {
+            if (capabilityMap.containsKey(functionFDN.getQualifiedFDN()) == false) {
+                capabilityMap.put(functionFDN.getQualifiedFDN(), wupFDN.getQualifiedFDN());
+            } else {
+                // not nice but Infinispan will serialize/deserialize lists and needs a whitelist'
+                // of classes to serialize/deserialize
+                StringBuilder wupFDNs = new StringBuilder().append(MAP_ENTRY_DELIMITER).append(wupFDN.getQualifiedFDN());
+                uowToWUPMap.replace(functionFDN.getQualifiedFDN(), wupFDNs.toString());
+            }
         }
+    }
+
+    // removes all multicast parcels from the Node's internal register, basically
+    // this should be called when a multicast parcel has hit the finished state.
+/*    public void deregisterMulticastParcels(String uowQualifiedFDN) {
+        this.multicasts.remove(uowQualifiedFDN);
+    }
+    
+    public List<String> getMulticast(String uowQualifiedFDN) {
+        return this.multicasts.get(uowQualifiedFDN);
+    }
+    
+    // when a multicast activity is started, it should be added to the map
+    public void addActiveMulticast(String parcelFDN, String uowQualifiedFDN) {
+        activeMulticasts.put(parcelFDN, uowQualifiedFDN);
+    }
+
+    public void removeActiveMulticast(String parcelFDN) {
+        activeMulticasts.remove(parcelFDN);
+    }
+*/    
+    public void updateCIStatus(PetasosWUPWatchdogState watchdogEntry) {
+        petasosWatchdogCache.put(watchdogEntry.getWupFDN().getQualifiedFDN(), new PetasosWUPWatchdogStateJSON(watchdogEntry).toJSONString());
+        // TODO: forward to other sites
     }
     
     private void initialiseHestiaConnection() {
@@ -172,10 +230,10 @@ public class PetasosNode {
         // TODO: change the var name once comm type is known
         private static final int NUM_CONNECTION_RETRIES = 3;
         String connectionEndpoint;
-        WatchdogEntry ciStatus;
+        PetasosWUPWatchdogState watchdogState;
         
-        public CIStatusForwardTask(WatchdogEntry ciStatus, String connectionEndpoint) {
-            this.ciStatus = ciStatus;
+        public CIStatusForwardTask(PetasosWUPWatchdogState watchdogState, String connectionEndpoint) {
+            this.watchdogState = watchdogState;
             this.connectionEndpoint = connectionEndpoint;
         }
         

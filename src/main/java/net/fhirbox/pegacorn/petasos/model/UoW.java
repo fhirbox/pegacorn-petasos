@@ -32,6 +32,7 @@ import java.util.Set;
  * @author mhunter
  */
 public class UoW {
+    public static final String HASH_ATTRIBUTE = "InstanceQualifier";
     /**
      * The FDN (fully distinguished name) of the UoW. Built from a combination of
      * the required "Component Function FDN" that would be required to process it
@@ -67,7 +68,7 @@ public class UoW {
         this.uowEgressContent = new HashSet<>();
         this.uowProcessingOutcome = UoWProcessingOutcomeEnum.PEGACORN_UOW_OUTCOME_NOTSTARTED;
         this.uowFDN = new FDN(functionFDN);
-        RDN newRDN = new RDN("InstanceQualifier", generatedInstanceValue);
+        RDN newRDN = new RDN(HASH_ATTRIBUTE, generatedInstanceValue);
         this.uowFDN.appendRDN(newRDN); 
     }
     
@@ -76,7 +77,7 @@ public class UoW {
         this.uowEgressContent = new HashSet<>();
         this.uowProcessingOutcome = UoWProcessingOutcomeEnum.PEGACORN_UOW_OUTCOME_NOTSTARTED;
         this.uowFDN = new FDN(functionFDN);
-        RDN newRDN = new RDN("InstanceQualifier", uowQualifier);
+        RDN newRDN = new RDN(HASH_ATTRIBUTE, uowQualifier);
         this.uowFDN.appendRDN(newRDN);
     }
     

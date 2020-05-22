@@ -45,9 +45,9 @@ import net.fhirbox.pegacorn.petasos.model.UoWProcessingOutcomeEnum;
  * @author mhunter
  */
 public class PetasosParcelJSON {
-    private JSONObject parcelJSON;
-
     private static final Logger LOG = LoggerFactory.getLogger(PetasosParcelJSON.class);
+
+    private JSONObject parcelJSON;
 
     public PetasosParcelJSON(String parcelString) {
         this.parcelJSON = new JSONObject(parcelString);
@@ -144,12 +144,20 @@ public class PetasosParcelJSON {
         parcelJSON.getJSONObject("watchdogStatus").put("lastStatusUpdate", lastStatusUpdate);
     }
     
+    public String getWUPFDN() {
+        return parcelJSON.getJSONObject("watchdogStatus").getString("wupFDN");
+    }
+    
     public String getUoWFDN() {
         return parcelJSON.getJSONObject("uow").getString("uowFDN");
     }
     
     public void setParcelStatus(PetasosParcelStatusEnum parcelStatus) {
         parcelJSON.put("parcelStatus", parcelStatus.getPetasosParcelStatus());
+    }
+    
+    public PetasosParcelStatusEnum getParcelStatus() {
+        return PetasosParcelStatusEnum.valueOf(parcelJSON.getString("parcelStatus"));
     }
     
     public long getParcelInstantiationInstant() {
@@ -167,7 +175,17 @@ public class PetasosParcelJSON {
         return null;
     }
     
-
+    public void addRegisteredWUPFDN(String wupQualifiedFDN) {
+        if (parcelJSON.getJSONObject("parcelRegistration").has("registeredWUPList")) {
+            parcelJSON.getJSONObject("parcelRegistration").getJSONArray("registeredWUPList")
+                .put(wupQualifiedFDN);
+        } else {
+            JSONArray wupList = new JSONArray();
+            wupList.put(wupQualifiedFDN);
+            parcelJSON.getJSONObject("parcelRegistration").put("registeredWUPList", wupList);
+        }
+    }
+    
     public void setUoW(UoW uow) {
         JSONArray ingressContent = new JSONArray();
         if (uow.getUowIngressContent() != null) {
