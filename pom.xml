@@ -63,7 +63,7 @@
     <dependency>
         <groupId>org.json</groupId>
         <artifactId>json</artifactId>
-        <version>20190722</version>
+        <version>20230227</version>
     </dependency>
 
     <!-- Wildfly. Just copied from MITaF, not sure how much is needed but all the annotations are here somewhere -->
